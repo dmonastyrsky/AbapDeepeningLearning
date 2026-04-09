@@ -49,16 +49,31 @@ CLASS lcl_passenger_flight DEFINITION .
 
   PROTECTED SECTION.
   PRIVATE SECTION.
-
-    DATA planetype TYPE /dmo/plane_type_id.
+    DATA planetype  TYPE /dmo/plane_type_id.
 
     DATA seats_max  TYPE /dmo/plane_seats_max.
     DATA seats_occ  TYPE /dmo/plane_seats_occupied.
     DATA seats_free TYPE i.
 
-    DATA price TYPE /dmo/flight_price.
+    DATA price      TYPE /dmo/flight_price.
+
     CONSTANTS currency TYPE /dmo/currency_code VALUE 'EUR'.
 
+    TYPES: BEGIN OF st_flights_buffer,
+             carrier_id     TYPE z98_pass_flight-carrier_id,
+             connection_id  TYPE z98_pass_flight-connection_id,
+             flight_date    TYPE z98_pass_flight-flight_date,
+             plane_type_id  TYPE z98_pass_flight-plane_type_id,
+             seats_max      TYPE z98_pass_flight-seats_max,
+             seats_occupied TYPE z98_pass_flight-seats_occupied,
+             price          TYPE z98_pass_flight-price,
+             currency_code  TYPE z98_pass_flight-currency_code,
+           END OF st_flights_buffer.
+
+    TYPES tt_flights_buffer TYPE HASHED TABLE OF st_flights_buffer
+                            WITH UNIQUE KEY carrier_id connection_id flight_date.
+
+    CLASS-DATA flights_buffer TYPE tt_flights_buffer.
 
     DATA connection_details TYPE st_connection_details.
 
@@ -70,31 +85,42 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
     SELECT
       FROM z98_pass_flight
-    FIELDS carrier_id, connection_id, flight_date
+    FIELDS carrier_id, connection_id, flight_date,
+           plane_type_id, seats_max, seats_occupied,
+           price, currency_code
      WHERE carrier_id    = @i_carrier_id
-      INTO TABLE @DATA(keys).
+      INTO TABLE @flights_buffer.
 
-    LOOP AT keys INTO DATA(key).
-      APPEND NEW lcl_passenger_flight( i_carrier_id    = key-carrier_id
-                                       i_connection_id = key-connection_id
-                                       i_flight_date   = key-flight_date )
+    LOOP AT FLIGHTS_BUFFER INTO DATA(flight).
+      APPEND NEW lcl_passenger_flight( i_carrier_id    = flight-carrier_id
+                                       i_connection_id = flight-connection_id
+                                       i_flight_date   = flight-flight_date )
               TO r_result.
     ENDLOOP.
 
   ENDMETHOD.
 
-
   METHOD constructor.
 
-    SELECT SINGLE
-      FROM z98_pass_flight
-    FIELDS plane_type_id, seats_max, seats_occupied, price, currency_code
-     WHERE carrier_id    = @i_carrier_id
-       AND connection_id = @i_connection_id
-       AND flight_date   = @i_flight_date
-      INTO @DATA(flight_raw).
+    " Read buffer
+    TRY.
+        DATA(flight_raw) = flights_buffer[ carrier_id    = i_carrier_id
+                                           connection_id = i_connection_id
+                                           flight_date   = i_flight_date ].
 
-    IF sy-subrc = 0.
+      CATCH cx_sy_itab_line_not_found.
+        " Read from database if data not found in buffer
+        SELECT SINGLE FROM z98_pass_flight
+          FIELDS plane_type_id, seats_max, seats_occupied, price, currency_code
+          WHERE carrier_id    = @i_carrier_id
+            AND connection_id = @i_connection_id
+            AND flight_date   = @i_flight_date
+          INTO CORRESPONDING FIELDS OF @flight_raw.
+
+    ENDTRY.
+
+    IF flight_raw IS NOT INITIAL.
+
       me->carrier_id    = i_carrier_id.
       me->connection_id = i_connection_id.
       me->flight_date   = i_flight_date.
@@ -149,13 +175,13 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
            TO r_result.
     APPEND |Planetype:      { planetype  } | TO r_result.
     APPEND |Maximum Seats:  { seats_max  } | TO r_result.
-    APPEND |Occupied Seats: { seats_max } | TO r_result.
+    APPEND |Occupied Seats: { seats_occ } | TO r_result.
     APPEND |Free Seats:     { seats_free } | TO r_result.
     APPEND |Ticket Price:   { price CURRENCY = currency } { currency } | TO r_result.
 
   ENDMETHOD.
 
-ENDCLASS.
+  ENDCLASS.
 
 CLASS lcl_cargo_flight DEFINITION .
 
@@ -355,7 +381,7 @@ CLASS lcl_carrier DEFINITION .
   PRIVATE SECTION.
 
     DATA name          TYPE /dmo/carrier_name .
-    DATA currency_code TYPE /dmo/currency_code.
+    DATA currency_code TYPE /dmo/currency_code  ##NEEDED .
 
     DATA passenger_flights TYPE lcl_passenger_flight=>tt_flights.
 
@@ -416,7 +442,8 @@ CLASS lcl_carrier IMPLEMENTATION.
        AND connection_details-airport_to_id = i_airport_to_id
        AND flight->get_free_capacity(  ) >= i_cargo.
 
-        DATA(days_later) =  i_from_date - flight->flight_date.
+*        DATA(days_later) =  i_from_date - flight->flight_date.           " Hier der Fehler aus Aufgabe 3
+         DATA(days_later) =  flight->flight_date - i_from_date.           " Hier ohne Fehler
 
         IF days_later < e_days_later. "earlier than previous one?
           e_flight = flight.
