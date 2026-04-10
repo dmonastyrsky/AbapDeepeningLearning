@@ -40,6 +40,7 @@ CLASS lcl_passenger_flight DEFINITION .
     METHODS
       get_description RETURNING VALUE(r_result) TYPE string_table.
 
+    CLASS-METHODS class_constructor.
     CLASS-METHODS
       get_flights_by_carrier
         IMPORTING
@@ -59,6 +60,8 @@ CLASS lcl_passenger_flight DEFINITION .
 
     CONSTANTS currency TYPE /dmo/currency_code VALUE 'EUR'.
 
+    DATA connection_details TYPE st_connection_details.
+
     TYPES: BEGIN OF st_flights_buffer,
              carrier_id     TYPE z98_pass_flight-carrier_id,
              connection_id  TYPE z98_pass_flight-connection_id,
@@ -75,11 +78,37 @@ CLASS lcl_passenger_flight DEFINITION .
 
     CLASS-DATA flights_buffer TYPE tt_flights_buffer.
 
-    DATA connection_details TYPE st_connection_details.
+    "Analyzing Database Access with SQL Trace +
+    TYPES:
+      BEGIN OF st_connections_buffer,
+        carrier_id      TYPE /dmo/carrier_id,
+        connection_id   TYPE /dmo/connection_id,
+        airport_from_id TYPE /dmo/airport_from_id,
+        airport_to_id   TYPE /dmo/airport_to_id,
+        departure_time  TYPE /dmo/flight_departure_time,
+        arrival_time    TYPE /dmo/flight_departure_time,
+        duration        TYPE i,
+      END OF st_connections_buffer.
+
+    CLASS-DATA connections_buffer TYPE TABLE OF st_connections_buffer.
+
 
 ENDCLASS.
 
 CLASS lcl_passenger_flight IMPLEMENTATION.
+  METHOD class_constructor.
+    " Preload flight data into buffer
+    SELECT
+      FROM z98_pass_flight                  "#EC CI_NOWHERE
+      FIELDS carrier_id, connection_id, flight_date, plane_type_id, seats_max, seats_occupied, price, currency_code
+      INTO CORRESPONDING FIELDS OF TABLE @flights_buffer.
+
+    " Preload connection data into buffer
+    SELECT
+      FROM /dmo/connection                  "#EC CI_NOWHERE
+      FIELDS carrier_id, connection_id, airport_from_id, airport_to_id, departure_time, arrival_time
+      INTO CORRESPONDING FIELDS OF TABLE @connections_buffer.
+  ENDMETHOD.
 
   METHOD get_flights_by_carrier.
 
@@ -91,7 +120,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
      WHERE carrier_id    = @i_carrier_id
       INTO TABLE @flights_buffer.
 
-    LOOP AT FLIGHTS_BUFFER INTO DATA(flight).
+    LOOP AT flights_buffer INTO DATA(flight).
       APPEND NEW lcl_passenger_flight( i_carrier_id    = flight-carrier_id
                                        i_connection_id = flight-connection_id
                                        i_flight_date   = flight-flight_date )
@@ -109,6 +138,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
                                            flight_date   = i_flight_date ].
 
       CATCH cx_sy_itab_line_not_found.
+
         " Read from database if data not found in buffer
         SELECT SINGLE FROM z98_pass_flight
           FIELDS plane_type_id, seats_max, seats_occupied, price, currency_code
@@ -145,16 +175,45 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
           price = flight_raw-price.
       ENDTRY.
 
-* Set connection details
-      SELECT SINGLE
-        FROM /dmo/connection
-      FIELDS airport_from_id, airport_to_id, departure_time, arrival_time
-       WHERE carrier_id    = @carrier_id
-         AND connection_id = @connection_id
-        INTO @connection_details .
+** Set connection details
+*      SELECT SINGLE
+*        FROM /dmo/connection
+*      FIELDS airport_from_id, airport_to_id, departure_time, arrival_time
+*       WHERE carrier_id    = @carrier_id
+*         AND connection_id = @connection_id
+*        INTO @connection_details .
+*
+*      connection_details-duration = connection_details-arrival_time
+*                                  - connection_details-departure_time.
 
-      connection_details-duration = connection_details-arrival_time
-                                  - connection_details-departure_time.
+      " Try to read connection details from buffer
+      DATA(connection_raw) = VALUE #( connections_buffer[
+                                        carrier_id    = i_carrier_id
+                                        connection_id = i_connection_id ] OPTIONAL ).
+
+      " If not found in buffer, read from database
+      IF connection_raw IS INITIAL.
+        SELECT SINGLE
+          FROM /dmo/connection
+          FIELDS *
+          WHERE carrier_id    = @i_carrier_id
+            AND connection_id = @i_connection_id
+          INTO CORRESPONDING FIELDS OF @connection_raw.
+
+        " If found in database, insert into buffer for future use
+        IF sy-subrc = 0.
+          INSERT connection_raw INTO TABLE connections_buffer.
+        ENDIF.
+      ENDIF.
+
+      " If connection data is available, calculate flight duration
+      IF connection_raw IS NOT INITIAL.
+        connection_details = CORRESPONDING #( connection_raw ).
+
+        " Simple duration calculation (HHMMSS format)
+        connection_details-duration = connection_details-arrival_time
+                                    - connection_details-departure_time.
+      ENDIF.
 
     ENDIF.
   ENDMETHOD.
@@ -181,7 +240,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
   ENDMETHOD.
 
-  ENDCLASS.
+ENDCLASS.
 
 CLASS lcl_cargo_flight DEFINITION .
 
@@ -443,7 +502,7 @@ CLASS lcl_carrier IMPLEMENTATION.
        AND flight->get_free_capacity(  ) >= i_cargo.
 
 *        DATA(days_later) =  i_from_date - flight->flight_date.           " Hier der Fehler aus Aufgabe 3
-         DATA(days_later) =  flight->flight_date - i_from_date.           " Hier ohne Fehler
+        DATA(days_later) =  flight->flight_date - i_from_date.           " Hier ohne Fehler
 
         IF days_later < e_days_later. "earlier than previous one?
           e_flight = flight.
