@@ -97,6 +97,12 @@ ENDCLASS.
 
 CLASS lcl_passenger_flight IMPLEMENTATION.
   METHOD class_constructor.
+
+    SELECT
+     FROM Z98_AIRPORT
+   FIELDS airport_id, time_zone
+     INTO TABLE @DATA(airports).
+
     " Preload flight data into buffer
     SELECT
       FROM z98_pass_flight                  "#EC CI_NOWHERE
@@ -108,6 +114,34 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
       FROM /dmo/connection                  "#EC CI_NOWHERE
       FIELDS carrier_id, connection_id, airport_from_id, airport_to_id, departure_time, arrival_time
       INTO CORRESPONDING FIELDS OF TABLE @connections_buffer.
+
+    DATA(today) = cl_abap_context_info=>get_system_date( ).
+
+    LOOP AT connections_buffer INTO DATA(connection).
+        CONVERT DATE today
+              TIME connection-departure_time
+              TIME ZONE airports[ airport_id = connection-airport_from_id ]-time_zone
+              INTO UTCLONG DATA(departure_utclong).
+
+        CONVERT DATE today
+              TIME connection-arrival_time
+              TIME ZONE airports[ airport_id = connection-airport_to_id ]-time_zone
+              INTO UTCLONG DATA(arrival_utclong).
+
+         " Handle flights that cross midnight (arrival next day)
+         IF arrival_utclong < departure_utclong.
+           arrival_utclong = utclong_add( val = arrival_utclong seconds = 86400 ). " Add 24 hours
+         ENDIF.
+
+         connection-duration = utclong_diff( high = arrival_utclong
+                                          low  = departure_utclong
+                                        ) / 60.
+
+         MODIFY connections_buffer FROM connection TRANSPORTING duration.
+
+    ENDLOOP.
+
+
   ENDMETHOD.
 
   METHOD get_flights_by_carrier.
@@ -210,9 +244,12 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
       IF connection_raw IS NOT INITIAL.
         connection_details = CORRESPONDING #( connection_raw ).
 
-        " Simple duration calculation (HHMMSS format)
-        connection_details-duration = connection_details-arrival_time
-                                    - connection_details-departure_time.
+        IF connection_details-duration IS INITIAL.
+
+          " Simple duration calculation (HHMMSS format)
+          connection_details-duration = connection_details-arrival_time
+                                  - connection_details-departure_time.
+        ENDIF.
       ENDIF.
 
     ENDIF.
@@ -237,6 +274,8 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
     APPEND |Occupied Seats: { seats_occ } | TO r_result.
     APPEND |Free Seats:     { seats_free } | TO r_result.
     APPEND |Ticket Price:   { price CURRENCY = currency } { currency } | TO r_result.
+    APPEND |Duration:       { connection_details-duration } minutes| TO r_result.
+
 
   ENDMETHOD.
 

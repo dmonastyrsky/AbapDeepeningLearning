@@ -54,114 +54,178 @@ CLASS zcl_98_da_fill_airports IMPLEMENTATION.
         LOOP AT lt_airports ASSIGNING FIELD-SYMBOL(<fs_airport>).
 
           CASE <fs_airport>-country.
-            " Europe - CET (Central European Time)
-            WHEN 'DE' OR 'FR' OR 'AT' OR 'CH' OR 'NL' OR 'IT' OR 'BE' OR 'LU' OR 'ES' OR 'CZ' OR 'SK' OR 'HU' OR 'RO' OR 'PT'.
-              <fs_airport>-time_zone = 'CET'.       " Central European Time (UTC+1)
 
-            " British Isles - Use WET (Western European Time)
-            WHEN 'GB' OR 'IE' OR 'IS'.
-              <fs_airport>-time_zone = 'WET'.       " Western European Time (UTC+0)
+              " --- EUROPE ---
+              " Central European Time (UTC+1)
+            WHEN 'DE' OR 'FR' OR 'AT' OR 'CH' OR 'NL' OR 'IT' OR 'BE' OR 'LU' OR 'CZ' OR 'SK' OR 'HU' OR 'PL' OR 'RO' OR 'SE' OR 'NO' OR 'DK'.
+              <fs_airport>-time_zone = 'UTC+1'.
 
-            " Nordic Countries - CET
-            WHEN 'SE' OR 'NO' OR 'DK' OR 'FI'.
-              <fs_airport>-time_zone = 'CET'.       " Central European Time (UTC+1)
+              " Spain & Canary Islands
+            WHEN 'ES'.
+              CASE <fs_airport>-airport_id.
+                WHEN 'ACE' OR 'TFN' OR 'TFS' OR 'LPA'. " Canary Islands
+                  <fs_airport>-time_zone = 'UTC'.
+                WHEN OTHERS.
+                  <fs_airport>-time_zone = 'UTC+1'.
+              ENDCASE.
 
-            " Eastern Europe - EET (Eastern European Time)
-            WHEN 'PL' OR 'UA' OR 'BY' OR 'RU' OR 'BG' OR 'GR' OR 'RS' OR 'HR' OR 'SI' OR 'LT' OR 'LV' OR 'EE' OR 'MT' OR 'CY'.
-              <fs_airport>-time_zone = 'EET'.       " Eastern European Time (UTC+2)
+              " British Isles, Iceland & Portugal
+            WHEN 'GB' OR 'IE' OR 'IS' OR 'PT'.
+              <fs_airport>-time_zone = 'UTC'.
 
-            " North America - EST/CST/PST
+              " Eastern Europe & Finland (UTC+2)
+            WHEN 'UA' OR 'FI' OR 'BY' OR 'BG' OR 'GR' OR 'RS' OR 'HR' OR 'SI' OR 'LT' OR 'LV' OR 'EE' OR 'MT' OR 'CY'.
+              <fs_airport>-time_zone = 'UTC+2'.
+
+              " Turkey & Russia (Moscow/West)
+            WHEN 'TR'.
+              <fs_airport>-time_zone = 'UTC+3'.
+
+            WHEN 'RU'.
+              CASE <fs_airport>-airport_id.
+                WHEN 'SVO' OR 'DME' OR 'VKO'.
+                  <fs_airport>-time_zone = 'UTC+3'. " Moscow Time
+                WHEN 'OVB'.
+                  <fs_airport>-time_zone = 'UTC+7'. " Novosibirsk Time
+                WHEN 'VVO'.
+                  <fs_airport>-time_zone = 'UTC+10'. " Vladivostok Time
+                WHEN OTHERS.
+                  <fs_airport>-time_zone = 'UTC+3'.
+              ENDCASE.
+
+              " --- NORTH AMERICA ---
             WHEN 'US'.
-              CASE <fs_airport>-city.
-                WHEN 'New York' OR 'Boston' OR 'Miami' OR 'Philadelphia' OR 'Washington'.
-                  <fs_airport>-time_zone = 'EST'.   " Eastern Standard Time (UTC-5)
-                WHEN 'Chicago' OR 'Dallas' OR 'Houston' OR 'Denver'.
-                  <fs_airport>-time_zone = 'CST'.   " Central Standard Time (UTC-6)
-                WHEN 'Phoenix' OR 'Salt Lake City' OR 'Albuquerque'.
-                  <fs_airport>-time_zone = 'MST'.   " Mountain Standard Time (UTC-7)
-                WHEN 'Los Angeles' OR 'San Francisco' OR 'Seattle' OR 'San Diego' OR 'Las Vegas' OR 'Portland'.
-                  <fs_airport>-time_zone = 'PST'.   " Pacific Standard Time (UTC-8)
+              CASE <fs_airport>-airport_id.
+                WHEN 'JFK' OR 'LGA' OR 'EWR' OR 'BOS' OR 'MIA' OR 'PHL' OR 'DCA' OR 'IAD' OR 'BWI'.
+                  <fs_airport>-time_zone = 'UTC-5'. " Eastern Standard Time
+                WHEN 'ORD' OR 'MDW' OR 'DFW' OR 'IAH' OR 'BNA' OR 'HOU' OR 'MCI'.
+                  <fs_airport>-time_zone = 'UTC-6'. " Central Standard Time
+                WHEN 'DEN' OR 'PHX' OR 'SLC' OR 'ABQ' OR 'ELP'.
+                  <fs_airport>-time_zone = 'UTC-7'. " Mountain Standard Time
+                WHEN 'SFO' OR 'LAX' OR 'SEA' OR 'SAN' OR 'LAS' OR 'PDX' OR 'OAK' OR 'SJC'.
+                  <fs_airport>-time_zone = 'UTC-8'. " Pacific Standard Time
                 WHEN OTHERS.
-                  <fs_airport>-time_zone = 'EST'.   " Default to Eastern
+                  <fs_airport>-time_zone = 'UTC-5'.
               ENDCASE.
 
-            " Canada
             WHEN 'CA'.
-              CASE <fs_airport>-city.
-                WHEN 'Toronto' OR 'Montreal' OR 'Ottawa' OR 'Halifax'.
-                  <fs_airport>-time_zone = 'EST'.   " Eastern
-                WHEN 'Calgary' OR 'Edmonton' OR 'Vancouver'.
-                  <fs_airport>-time_zone = 'PST'.   " Pacific
+              CASE <fs_airport>-airport_id.
+                WHEN 'YYZ' OR 'YUL' OR 'YOW' OR 'YHZ'.
+                  <fs_airport>-time_zone = 'UTC-5'. " Eastern
+                WHEN 'YYC' OR 'YEG'.
+                  <fs_airport>-time_zone = 'UTC-7'. " Mountain
+                WHEN 'YVR'.
+                  <fs_airport>-time_zone = 'UTC-8'. " Pacific
                 WHEN OTHERS.
-                  <fs_airport>-time_zone = 'EST'.
+                  <fs_airport>-time_zone = 'UTC-5'.
               ENDCASE.
 
-            " Mexico & Central America
+              " Mexico & Central America
             WHEN 'MX' OR 'CR' OR 'PA' OR 'HN' OR 'NI' OR 'GT' OR 'SV' OR 'BZ'.
-              <fs_airport>-time_zone = 'CST'.       " Central Standard Time (UTC-6)
+              <fs_airport>-time_zone = 'UTC-6'.
 
-            " South America - Use EST/CST as available equivalents
-            WHEN 'BR' OR 'AR' OR 'CL' OR 'UY' OR 'BO' OR 'PY' OR 'GY' OR 'SR' OR 'GF'.
-              <fs_airport>-time_zone = 'EST'.       " Fallback to EST for South America
+              " --- SOUTH AMERICA ---
+            WHEN 'BR'.
+              CASE <fs_airport>-airport_id.
+                WHEN 'MAO'.
+                  <fs_airport>-time_zone = 'UTC-4'. " Amazon Time
+                WHEN OTHERS.
+                  <fs_airport>-time_zone = 'UTC-3'. " Brasilia Time
+              ENDCASE.
+
+            WHEN 'AR' OR 'CL' OR 'UY' OR 'BO' OR 'PY' OR 'GY' OR 'SR' OR 'GF'.
+              <fs_airport>-time_zone = 'UTC-3'.
 
             WHEN 'CO' OR 'EC' OR 'PE' OR 'VE'.
-              <fs_airport>-time_zone = 'CST'.       " Fallback to CST
+              <fs_airport>-time_zone = 'UTC-5'.
 
-            " Middle East & Central Asia
+              " --- ASIA & MIDDLE EAST ---
             WHEN 'SA' OR 'AE' OR 'KW' OR 'QA' OR 'BH' OR 'OM' OR 'YE'.
-              <fs_airport>-time_zone = 'AST'.       " Arabia Standard Time (UTC+3)
-            WHEN 'IL' OR 'TR' OR 'SY' OR 'IQ' OR 'JO' OR 'LB'.
-              <fs_airport>-time_zone = 'EET'.       " Eastern European Time (UTC+2)
-            WHEN 'IR' OR 'AZ' OR 'TM' OR 'UZ' OR 'KZ' OR 'KG' OR 'TJ' OR 'AF'.
-              <fs_airport>-time_zone = 'AST'.       " Arabia Standard Time as fallback (UTC+3)
+              " Hard-fix for GCJ (Johannesburg) if it has the wrong country code 'SA'
+              IF <fs_airport>-airport_id = 'GCJ'.
+                <fs_airport>-country = 'ZA'.
+                <fs_airport>-time_zone = 'UTC+2'.
+              ELSE.
+                <fs_airport>-time_zone = 'UTC+3'.
+              ENDIF.
 
-            " South Asia
+            WHEN 'IL' OR 'SY' OR 'IQ' OR 'JO' OR 'LB'.
+              <fs_airport>-time_zone = 'UTC+2'.
+
+            WHEN 'IR' OR 'AZ' OR 'TM' OR 'UZ' OR 'KG' OR 'TJ' OR 'AF'.
+              <fs_airport>-time_zone = 'UTC+3'.
+
+            WHEN 'KZ'.
+              <fs_airport>-time_zone = 'UTC+5'. " Kazakhstan Unified Time
+
             WHEN 'IN' OR 'BD' OR 'LK' OR 'NP' OR 'PK'.
-              <fs_airport>-time_zone = 'IST'.       " Indian Standard Time (UTC+5:30)
+              <fs_airport>-time_zone = 'UTC+5.5'. " Indian Standard Time
 
-            " Southeast Asia - Use CST for Malaysia/Singapore area
-            WHEN 'TH' OR 'VN' OR 'KH' OR 'LA' OR 'MY' OR 'SG' OR 'BN' OR 'ID' OR 'PH'.
-              <fs_airport>-time_zone = 'CST'.       " China Standard Time (UTC+8)
+            WHEN 'TH' OR 'VN' OR 'KH' OR 'LA'.
+              <fs_airport>-time_zone = 'UTC+7'.
 
-            " East Asia
-            WHEN 'JP' OR 'CN' OR 'KR' OR 'TW'.
-              <fs_airport>-time_zone = 'CST'.       " China Standard Time (UTC+8)
+            WHEN 'MY' OR 'SG' OR 'BN' OR 'PH' OR 'CN' OR 'TW'.
+              <fs_airport>-time_zone = 'UTC+8'.
 
-            " Oceania - Use PST/WET as fallbacks
-            WHEN 'AU' OR 'NZ'.
-              CASE <fs_airport>-city.
-                WHEN 'Sydney' OR 'Melbourne' OR 'Brisbane' OR 'Canberra' OR 'Perth'.
-                  <fs_airport>-time_zone = 'PST'.   " Fallback for Australian Eastern
+            WHEN 'ID'.
+              CASE <fs_airport>-airport_id.
+                WHEN 'CGK' OR 'BDO' OR 'SUB'.
+                  <fs_airport>-time_zone = 'UTC+7'. " Western Indonesian Time
+                WHEN 'DPS' OR 'LOP'.
+                  <fs_airport>-time_zone = 'UTC+8'. " Central Indonesian Time
                 WHEN OTHERS.
-                  <fs_airport>-time_zone = 'PST'.
+                  <fs_airport>-time_zone = 'UTC+7'.
               ENDCASE.
 
-            " Africa - North
-            WHEN 'EG' OR 'LY' OR 'SD' OR 'DZ' OR 'TN' OR 'MA'.
-              <fs_airport>-time_zone = 'EET'.       " Eastern European Time (UTC+2)
+            WHEN 'JP' OR 'KR'.
+              <fs_airport>-time_zone = 'UTC+9'.
 
-            " Africa - South
-            WHEN 'ZA' OR 'BW' OR 'LS' OR 'SZ'.
-              <fs_airport>-time_zone = 'EET'.       " Use EET as fallback
+              " --- OCEANIA ---
+            WHEN 'AU'.
+              CASE <fs_airport>-airport_id.
+                WHEN 'SYD' OR 'MEL' OR 'BNE' OR 'CBR'.
+                  <fs_airport>-time_zone = 'UTC+10'. " Australian Eastern Time
+                WHEN 'PER'.
+                  <fs_airport>-time_zone = 'UTC+8'. " Australian Western Time
+                WHEN 'ADL' OR 'ASP'.
+                  <fs_airport>-time_zone = 'UTC+9'. " Australian Central Time (approx)
+                WHEN OTHERS.
+                  <fs_airport>-time_zone = 'UTC+10'.
+              ENDCASE.
 
-            " Africa - West & Central
+            WHEN 'NZ'.
+              <fs_airport>-time_zone = 'UTC+12'.
+
+              " --- AFRICA ---
+            WHEN 'EG' OR 'LY' OR 'SD'.
+              <fs_airport>-time_zone = 'UTC+2'.
+
+            WHEN 'DZ' OR 'TN' OR 'MA'.
+              <fs_airport>-time_zone = 'UTC+1'.
+
+              " Southern Africa (ZA = South Africa, ZW = Zimbabwe)
+            WHEN 'ZA' OR 'BW' OR 'LS' OR 'SZ' OR 'ZW' OR 'MZ' OR 'MW' OR 'ZM'.
+              <fs_airport>-time_zone = 'UTC+2'.
+
+              " East Africa
+            WHEN 'ET' OR 'KE' OR 'UG' OR 'TZ'.
+              <fs_airport>-time_zone = 'UTC+3'.
+
+              " West & Central Africa
             WHEN 'NG' OR 'GH' OR 'CI' OR 'SN' OR 'ML' OR 'BJ' OR 'BF' OR 'GM' OR 'GN' OR 'GW' OR 'LR' OR 'MR' OR 'SL' OR 'TG' OR 'CG' OR 'CD' OR 'AO' OR 'CM' OR 'GA' OR 'GQ' OR 'ST' OR 'CF'.
-              <fs_airport>-time_zone = 'WET'.       " Western European Time (UTC+0)
+              <fs_airport>-time_zone = 'UTC'.
 
-            " Africa - East
-            WHEN 'ET' OR 'KE' OR 'UG' OR 'TZ' OR 'MZ' OR 'MW' OR 'ZM' OR 'ZW'.
-              <fs_airport>-time_zone = 'EET'.       " Eastern European Time (UTC+2)
-
-            " Caribbean & Atlantic
+              " Caribbean & Atlantic
             WHEN 'CU' OR 'DO' OR 'HT' OR 'PR' OR 'JM' OR 'TT' OR 'BB' OR 'BS' OR 'AG' OR 'KN' OR 'LC' OR 'VC' OR 'VG' OR 'VI' OR 'AI' OR 'DM' OR 'GD' OR 'MS' OR 'KY' OR 'TK' OR 'BM' OR 'CV' OR 'SH' OR 'GL' OR 'FO'.
-              <fs_airport>-time_zone = 'EST'.       " Eastern Standard Time (UTC-5)
+              <fs_airport>-time_zone = 'UTC-5'.
 
-            " Default fallback
             WHEN OTHERS.
-              <fs_airport>-time_zone = 'WET'.       " Western European Time (UTC+0) - neutral fallback
+              <fs_airport>-time_zone = 'UTC'.
+
           ENDCASE.
 
         ENDLOOP.
+
 
         " 4. Insert enriched data into your custom table
         INSERT z98_airport FROM TABLE @lt_airports.
