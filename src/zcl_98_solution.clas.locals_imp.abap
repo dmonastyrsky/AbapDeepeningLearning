@@ -264,20 +264,33 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
     r_result = me->seats_free.
   ENDMETHOD.
 
-  METHOD get_description.
 
-    APPEND |Flight { carrier_id } { connection_id } on { flight_date DATE = USER } | &&
-           |from { connection_details-airport_from_id } to { connection_details-airport_to_id } |
-           TO r_result.
-    APPEND |Planetype:      { planetype  } | TO r_result.
-    APPEND |Maximum Seats:  { seats_max  } | TO r_result.
-    APPEND |Occupied Seats: { seats_occ } | TO r_result.
-    APPEND |Free Seats:     { seats_free } | TO r_result.
-    APPEND |Ticket Price:   { price CURRENCY = currency } { currency } | TO r_result.
-    APPEND |Duration:       { connection_details-duration } minutes| TO r_result.
+METHOD get_description.
 
+*    APPEND |Flight { carrier_id } { connection_id } on { flight_date DATE = USER } | &&
+*           |from { connection_details-airport_from_id } to { connection_details-airport_to_id } |
+*           TO r_result.
+
+    DATA txt TYPE string.
+
+    txt = 'Flight &carrid& &connid& on &date& from &from& to &to&'(005).
+    txt = replace( val = txt sub = '&carrid&' with = carrier_id ).
+    txt = replace( val = txt sub = '&connid&' with = connection_id ).
+    txt = replace( val = txt sub = '&date&'   with = |{ flight_date DATE = USER }| ).
+    txt = replace( val = txt sub = '&from&'   with = connection_details-airport_from_id ).
+    txt = replace( val = txt sub = '&to&'     with = connection_details-airport_to_id ).
+    APPEND txt TO r_result.
+
+    APPEND |{ 'Planetype:'(006)      } { planetype  } | TO r_result.
+    APPEND |{ 'Maximum Seats:'(007)  } { seats_max  } | TO r_result.
+    APPEND |{ 'Occupied Seats:'(008) } { seats_occ  } | TO r_result.
+    APPEND |{ 'Free Seats:'(009)     } { seats_free } | TO r_result.
+    APPEND |{ 'Ticket Price:'(010)   } { price CURRENCY = currency } { currency } | TO r_result.
+
+    APPEND |{ 'Duration:'(011)       } { connection_details-duration } { 'minutes'(012) }| TO r_result.
 
   ENDMETHOD.
+
 
 ENDCLASS.
 
@@ -520,10 +533,10 @@ CLASS lcl_carrier IMPLEMENTATION.
 
   METHOD get_output.
 
-    APPEND |Carrier { me->name } | TO r_result.
-    APPEND |Passenger Flights:  { lines( passenger_flights ) } | TO r_result.
-    APPEND |Average free seats: { get_average_free_seats(  ) } | TO r_result.
-    APPEND |Cargo Flights:      { lines( cargo_flights     ) } | TO r_result.
+    APPEND |{ 'Carrier Name:'(001)       } { me->name } | TO r_result.
+    APPEND |{ 'Passenger Flights:'(002)  } { lines( passenger_flights ) } | TO r_result.
+    APPEND |{ 'Average free seats:'(003) } { get_average_free_seats(  ) } | TO r_result.
+    APPEND |{ 'Cargo Flights:'(004)      } { lines( cargo_flights     ) } | TO r_result.
 
   ENDMETHOD.
 
