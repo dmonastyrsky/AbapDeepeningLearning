@@ -87,6 +87,8 @@ CLASS lcl_passenger_flight DEFINITION .
         airport_to_id   TYPE /dmo/airport_to_id,
         departure_time  TYPE /dmo/flight_departure_time,
         arrival_time    TYPE /dmo/flight_departure_time,
+        from_time_zone  TYPE timezone,
+        to_time_zone    TYPE timezone,
         duration        TYPE i,
       END OF st_connections_buffer.
 
@@ -98,10 +100,10 @@ ENDCLASS.
 CLASS lcl_passenger_flight IMPLEMENTATION.
   METHOD class_constructor.
 
-    SELECT
-     FROM Z98_AIRPORT
-   FIELDS airport_id, time_zone
-     INTO TABLE @DATA(airports).
+*    SELECT
+*     FROM Z98_AIRPORT
+*   FIELDS airport_id, time_zone
+*     INTO TABLE @DATA(airports).
 
     " Preload flight data into buffer
     SELECT
@@ -111,8 +113,17 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
     " Preload connection data into buffer
     SELECT
-      FROM /dmo/connection                  "#EC CI_NOWHERE
-      FIELDS carrier_id, connection_id, airport_from_id, airport_to_id, departure_time, arrival_time
+      FROM /dmo/connection  AS conn                "#EC CI_NOWHERE
+      LEFT OUTER JOIN Z98_AIRPORT AS from_apt ON conn~airport_from_id = from_apt~airport_id
+      LEFT OUTER JOIN Z98_AIRPORT AS to_apt ON conn~airport_to_id = to_apt~airport_id
+    FIELDS conn~carrier_id,
+             conn~connection_id,
+             conn~airport_from_id,
+             conn~airport_to_id,
+             conn~departure_time,
+             conn~arrival_time,
+             from_apt~time_zone AS from_time_zone,
+             to_apt~time_zone AS to_time_zone
       INTO CORRESPONDING FIELDS OF TABLE @connections_buffer.
 
     DATA(today) = cl_abap_context_info=>get_system_date( ).
@@ -120,12 +131,14 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
     LOOP AT connections_buffer INTO DATA(connection).
         CONVERT DATE today
               TIME connection-departure_time
-              TIME ZONE airports[ airport_id = connection-airport_from_id ]-time_zone
+              "TIME ZONE airports[ airport_id = connection-airport_from_id ]-time_zone
+              TIME ZONE connection-from_time_zone
               INTO UTCLONG DATA(departure_utclong).
 
         CONVERT DATE today
               TIME connection-arrival_time
-              TIME ZONE airports[ airport_id = connection-airport_to_id ]-time_zone
+              "TIME ZONE airports[ airport_id = connection-airport_to_id ]-time_zone
+              TIME ZONE connection-to_time_zone
               INTO UTCLONG DATA(arrival_utclong).
 
          " Handle flights that cross midnight (arrival next day)
