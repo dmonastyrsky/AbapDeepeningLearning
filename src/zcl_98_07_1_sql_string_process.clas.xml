@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_06_3_CASE_DISTINCTIONS</CLSNAME>
+    <CLSNAME>ZCL_98_07_1_SQL_STRING_PROCESS</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>CASE distinctions</DESCRIPT>
+    <DESCRIPT>String Processing</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

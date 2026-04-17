@@ -1,4 +1,4 @@
-CLASS zcl_98_05_1_the_join_syntax DEFINITION
+CLASS zcl_98_05_1_sql_join_syntax DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_05_1_the_join_syntax IMPLEMENTATION.
+CLASS zcl_98_05_1_sql_join_syntax IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

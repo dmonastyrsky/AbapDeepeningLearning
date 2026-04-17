@@ -1,4 +1,4 @@
-CLASS zcl_98_06_2_cast_expression DEFINITION
+CLASS zcl_98_06_2_sql_cast_express DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_06_2_cast_expression IMPLEMENTATION.
+CLASS zcl_98_06_2_sql_cast_express IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

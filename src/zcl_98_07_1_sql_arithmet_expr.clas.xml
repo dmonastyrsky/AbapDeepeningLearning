@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_06_2_CAST_EXPRESSION</CLSNAME>
+    <CLSNAME>ZCL_98_07_1_SQL_ARITHMET_EXPR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>The CAST Expression</DESCRIPT>
+    <DESCRIPT>Arithmetic Expressions</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

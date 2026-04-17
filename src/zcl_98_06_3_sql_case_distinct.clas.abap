@@ -1,4 +1,4 @@
-CLASS zcl_98_06_3_case_distinctions DEFINITION
+CLASS zcl_98_06_3_sql_case_distinct DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_06_3_case_distinctions IMPLEMENTATION.
+CLASS zcl_98_06_3_sql_case_distinct IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

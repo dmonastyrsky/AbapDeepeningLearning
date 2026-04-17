@@ -1,4 +1,4 @@
-CLASS zcl_98_06_1_exp_literals DEFINITION
+CLASS zcl_98_06_1_sql_exp_literals DEFINITION
   PUBLIC FINAL
   CREATE PUBLIC.
 
@@ -7,7 +7,7 @@ CLASS zcl_98_06_1_exp_literals DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_98_06_1_exp_literals IMPLEMENTATION.
+CLASS zcl_98_06_1_sql_exp_literals IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
 
     CONSTANTS c_number TYPE i VALUE 1234.

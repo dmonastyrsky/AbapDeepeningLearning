@@ -1,4 +1,4 @@
-CLASS zcl_98_05_2_inner_outer_joins DEFINITION
+CLASS zcl_98_05_2_sql_in_outer_joins DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_05_2_inner_outer_joins IMPLEMENTATION.
+CLASS zcl_98_05_2_sql_in_outer_joins IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

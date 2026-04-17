@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_05_1_THE_JOIN_SYNTAX</CLSNAME>
+    <CLSNAME>ZCL_98_05_1_SQL_JOIN_SYNTAX</CLSNAME>
     <LANGU>E</LANGU>
     <DESCRIPT>The Join Syntax (Implementing Joins)</DESCRIPT>
     <STATE>1</STATE>

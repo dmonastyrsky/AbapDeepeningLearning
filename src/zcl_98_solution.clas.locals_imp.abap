@@ -69,6 +69,7 @@ CLASS lcl_passenger_flight DEFINITION .
              plane_type_id  TYPE z98_pass_flight-plane_type_id,
              seats_max      TYPE z98_pass_flight-seats_max,
              seats_occupied TYPE z98_pass_flight-seats_occupied,
+             seats_free     TYPE i,
              price          TYPE z98_pass_flight-price,
              currency_code  TYPE z98_pass_flight-currency_code,
            END OF st_flights_buffer.
@@ -108,7 +109,8 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
     " Preload flight data into buffer
     SELECT
       FROM z98_pass_flight                  "#EC CI_NOWHERE
-      FIELDS carrier_id, connection_id, flight_date, plane_type_id, seats_max, seats_occupied, price, currency_code
+      FIELDS carrier_id, connection_id, flight_date, plane_type_id, seats_max, seats_occupied,
+      seats_max - seats_occupied AS seats_free, price, currency_code
       INTO CORRESPONDING FIELDS OF TABLE @flights_buffer.
 
     " Preload connection data into buffer
@@ -163,6 +165,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
       FROM z98_pass_flight
     FIELDS carrier_id, connection_id, flight_date,
            plane_type_id, seats_max, seats_occupied,
+           seats_max - seats_occupied AS seats_free,
            price, currency_code
      WHERE carrier_id    = @i_carrier_id
       INTO TABLE @flights_buffer.
@@ -188,7 +191,12 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
         " Read from database if data not found in buffer
         SELECT SINGLE FROM z98_pass_flight
-          FIELDS plane_type_id, seats_max, seats_occupied, price, currency_code
+          FIELDS plane_type_id,
+                 seats_max,
+                 seats_occupied,
+                 seats_max - seats_occupied AS seats_free,
+                 price,
+                 currency_code
           WHERE carrier_id    = @i_carrier_id
             AND connection_id = @i_connection_id
             AND flight_date   = @i_flight_date
@@ -205,7 +213,10 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
       planetype = flight_raw-plane_type_id.
       seats_max = flight_raw-seats_max.
       seats_occ = flight_raw-seats_occupied.
-      seats_free = flight_raw-seats_max - flight_raw-seats_occupied.
+      "seats_free = flight_raw-seats_max - flight_raw-seats_occupied.
+      seats_free = flight_raw-seats_free. " Direkt aus SQL, da bereits berechnet
+
+
 
 * convert currencies
       TRY.
@@ -522,17 +533,18 @@ CLASS lcl_carrier IMPLEMENTATION.
 
     me->carrier_id = i_carrier_id.
 
-    SELECT SINGLE
-      FROM /dmo/carrier
-    FIELDS name, currency_code
-     WHERE carrier_id = @i_carrier_id
-     INTO ( @me->name, @me->currency_code ).
+    SELECT SINGLE FROM /dmo/carrier
+*    FIELDS  name, currency_code
+    FIELDS concat_with_space( carrier_id, name, 1 ), currency_code
+
+      WHERE carrier_id = @i_carrier_id
+      INTO ( @me->name, @me->currency_code ).
 
     IF sy-subrc <> 0.
       RAISE EXCEPTION TYPE cx_abap_invalid_value.
     ENDIF.
 
-    name = carrier_id && ` ` && name.
+    "name = carrier_id && ` ` && name.
 
     me->passenger_flights =
         lcl_passenger_flight=>get_flights_by_carrier(
