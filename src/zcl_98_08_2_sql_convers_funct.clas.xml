@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_07_1_SQL_STRING_PROCESS</CLSNAME>
+    <CLSNAME>ZCL_98_08_2_SQL_CONVERS_FUNCT</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>String Processing</DESCRIPT>
+    <DESCRIPT>Conversion functions</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

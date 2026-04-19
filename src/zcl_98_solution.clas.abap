@@ -81,7 +81,30 @@ CLASS zcl_98_solution IMPLEMENTATION.
         out->write( data = `No cargo flight found` ).
       ENDIF.
 
+*      ////////////////////////////************
 
+      out->write(  `----------------MODEVI-----------------------` ).
+
+      CONSTANTS c_carrier_id2 TYPE /dmo/carrier_id VALUE 'AA'.
+      DATA(carrier2) = NEW lcl_carrier(  i_carrier_id = c_carrier_id2 ).
+
+      carrier2->find_passenger_flight(
+        EXPORTING
+          i_airport_from_id = 'HAV'
+          i_airport_to_id   = 'MIA'
+          i_from_date       = today
+          i_seats           = 5
+        IMPORTING
+          e_flight =     DATA(pass_flight2)
+          e_days_later = DATA(days_later3)
+                        ).
+
+      IF pass_flight2 IS BOUND.
+        out->write( name = |Found a suitable passenger flight in { days_later } days:|
+                    data = pass_flight2->get_description( ) ).
+      ELSE.
+        out->write( data = `No Passenger Flight found` ).
+      ENDIF.
 
     ENDIF.
 

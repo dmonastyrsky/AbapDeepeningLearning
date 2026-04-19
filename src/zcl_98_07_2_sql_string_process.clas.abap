@@ -1,4 +1,4 @@
-CLASS zcl_98_07_1_sql_string_process DEFINITION
+CLASS zcl_98_07_2_sql_string_process DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,10 +12,12 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_07_1_sql_string_process IMPLEMENTATION.
+CLASS zcl_98_07_2_sql_string_process IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.
+
+    DATA(today) = cl_abap_context_info=>get_system_date( ).
 
     SELECT FROM /dmo/customer
          FIELDS customer_id,
