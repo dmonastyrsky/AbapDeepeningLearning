@@ -108,7 +108,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
     " Preload flight data into buffer
     SELECT
-      FROM z98_pass_flight                  "#EC CI_NOWHERE
+      FROM z98_pass_flight                              "#EC CI_NOWHERE
       FIELDS carrier_id, connection_id, flight_date, plane_type_id, seats_max, seats_occupied,
       seats_max - seats_occupied AS seats_free, price, currency_code
       INTO CORRESPONDING FIELDS OF TABLE @flights_buffer.
@@ -117,7 +117,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
     " Preload connection data into buffer
     SELECT
-      FROM /dmo/connection AS conn                "#EC CI_NOWHERE
+      FROM /dmo/connection AS conn                      "#EC CI_NOWHERE
              LEFT OUTER JOIN
                z98_airport AS from_apt ON conn~airport_from_id = from_apt~airport_id
                  LEFT OUTER JOIN
@@ -185,27 +185,39 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
   METHOD get_flights_by_carrier.
 
-    SELECT
-      FROM z98_pass_flight
-    FIELDS carrier_id, connection_id, flight_date,
-           plane_type_id, seats_max, seats_occupied,
-           seats_max - seats_occupied AS seats_free,
-*           price,
-           currency_conversion(
-             amount             = price,
-             source_currency    = currency_code,
-             target_currency    = @currency,
-             exchange_rate_date = flight_date,
-             on_error           =
-               @sql_currency_conversion=>c_on_error-set_to_null
-                              ) AS price,
-*           currency_code
-           @currency AS currency_code
-     WHERE carrier_id    = @i_carrier_id
-     ORDER BY flight_date ASCENDING
-      INTO TABLE @flights_buffer.
+    " Check if data for this carrier is already loaded into the buffer
+    IF NOT line_exists( flights_buffer[ carrier_id = i_carrier_id ] ).
 
-    LOOP AT flights_buffer INTO DATA(flight).
+      SELECT
+        FROM z98_pass_flight
+      FIELDS carrier_id, connection_id, flight_date,
+             plane_type_id, seats_max, seats_occupied,
+             seats_max - seats_occupied AS seats_free,
+*           price,
+             currency_conversion(
+               amount             = price,
+               source_currency    = currency_code,
+               target_currency    = @currency,
+               exchange_rate_date = flight_date,
+               on_error           =
+                 @sql_currency_conversion=>c_on_error-set_to_null
+                                ) AS price,
+*           currency_code
+             @currency AS currency_code
+       WHERE carrier_id    = @i_carrier_id
+*     ORDER BY flight_date ASCENDING
+*      INTO TABLE @flights_buffer.
+        APPENDING TABLE @flights_buffer.
+
+      " Maintain buffer integrity by sorting and removing possible DB duplicates
+      SORT flights_buffer BY carrier_id connection_id flight_date.
+*      DELETE ADJACENT DUPLICATES FROM flights_buffer
+*        COMPARING carrier_id connection_id flight_date.
+
+    ENDIF.
+
+    LOOP AT flights_buffer INTO DATA(flight)
+    WHERE carrier_id = i_carrier_id.
       APPEND NEW lcl_passenger_flight( i_carrier_id    = flight-carrier_id
                                        i_connection_id = flight-connection_id
                                        i_flight_date   = flight-flight_date )
@@ -335,7 +347,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
   ENDMETHOD.
 
 
-METHOD get_description.
+  METHOD get_description.
 
 *    APPEND |Flight { carrier_id } { connection_id } on { flight_date DATE = USER } | &&
 *           |from { connection_details-airport_from_id } to { connection_details-airport_to_id } |
@@ -454,13 +466,19 @@ CLASS lcl_cargo_flight IMPLEMENTATION.
      ORDER BY flight_date ASCENDING
       INTO CORRESPONDING FIELDS OF TABLE @flights_buffer.
 
-    LOOP AT flights_buffer INTO DATA(flight).
-      APPEND NEW lcl_cargo_flight( i_carrier_id    = flight-carrier_id
-                                   i_connection_id = flight-connection_id
-                                   i_flight_date   = flight-flight_date )
-              TO r_result.
+*    LOOP AT flights_buffer INTO DATA(flight).
+*      APPEND NEW lcl_cargo_flight( i_carrier_id    = flight-carrier_id
+*                                   i_connection_id = flight-connection_id
+*                                   i_flight_date   = flight-flight_date )
+*              TO r_result.
+*
+*    ENDLOOP.
 
-    ENDLOOP.
+     r_result = VALUE #( FOR flight IN flights_buffer
+                 WHERE ( carrier_id = i_carrier_id )
+                 ( NEW lcl_cargo_flight( i_carrier_id    = flight-carrier_id
+                                         i_connection_id = flight-connection_id
+                                         i_flight_date   = flight-flight_date ) ) ).
   ENDMETHOD.
 
   METHOD constructor.
@@ -662,32 +680,39 @@ CLASS lcl_carrier IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_average_free_seats.
-*    DATA total TYPE i.
+**    DATA total TYPE i.
+**
+**    LOOP AT passenger_flights INTO DATA(flight).
+**
+**      total = total + flight->get_free_seats( ).
+**
+**    ENDLOOP.
+**
+**    r_result = total / lines( passenger_flights ).
 *
-*    LOOP AT passenger_flights INTO DATA(flight).
+**    SELECT FROM z98_pass_flight
+**      FIELDS SUM( seats_max - seats_occupied ) AS sum,
+**             COUNT(*)                          AS count
+**      WHERE carrier_id = @carrier_id
+**      INTO @DATA(aggregates).
+**
+**    IF aggregates-count > 0.
+**      r_result = aggregates-sum / aggregates-count.
+**    ELSE.
+**      r_result = 0.
+**    ENDIF.
 *
-*      total = total + flight->get_free_seats( ).
-*
-*    ENDLOOP.
-*
-*    r_result = total / lines( passenger_flights ).
-
 *    SELECT FROM z98_pass_flight
-*      FIELDS SUM( seats_max - seats_occupied ) AS sum,
-*             COUNT(*)                          AS count
+*      FIELDS CAST( AVG( seats_max - seats_occupied ) AS INT4 )
 *      WHERE carrier_id = @carrier_id
-*      INTO @DATA(aggregates).
-*
-*    IF aggregates-count > 0.
-*      r_result = aggregates-sum / aggregates-count.
-*    ELSE.
-*      r_result = 0.
-*    ENDIF.
+*      INTO @r_result.
 
-    SELECT FROM z98_pass_flight
-      FIELDS CAST( AVG( seats_max - seats_occupied ) AS INT4 )
-      WHERE carrier_id = @carrier_id
-      INTO @r_result.
+      r_result = REDUCE #(
+               INIT i = 0
+               FOR flight IN passenger_flights
+               NEXT i = i + flight->get_free_seats( )
+             )
+             / lines( passenger_flights ).
 
   ENDMETHOD.
 ENDCLASS.
