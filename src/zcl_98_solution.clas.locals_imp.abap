@@ -202,6 +202,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 *           currency_code
            @currency AS currency_code
      WHERE carrier_id    = @i_carrier_id
+     ORDER BY flight_date ASCENDING
       INTO TABLE @flights_buffer.
 
     LOOP AT flights_buffer INTO DATA(flight).
@@ -450,6 +451,7 @@ CLASS lcl_cargo_flight IMPLEMENTATION.
            plane_type_id, maximum_load, actual_load, load_unit,
            airport_from_id, airport_to_id, departure_time, arrival_time
      WHERE carrier_id    = @i_carrier_id
+     ORDER BY flight_date ASCENDING
       INTO CORRESPONDING FIELDS OF TABLE @flights_buffer.
 
     LOOP AT flights_buffer INTO DATA(flight).
@@ -660,17 +662,32 @@ CLASS lcl_carrier IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_average_free_seats.
+*    DATA total TYPE i.
+*
+*    LOOP AT passenger_flights INTO DATA(flight).
+*
+*      total = total + flight->get_free_seats( ).
+*
+*    ENDLOOP.
+*
+*    r_result = total / lines( passenger_flights ).
 
-    DATA total TYPE i.
+*    SELECT FROM z98_pass_flight
+*      FIELDS SUM( seats_max - seats_occupied ) AS sum,
+*             COUNT(*)                          AS count
+*      WHERE carrier_id = @carrier_id
+*      INTO @DATA(aggregates).
+*
+*    IF aggregates-count > 0.
+*      r_result = aggregates-sum / aggregates-count.
+*    ELSE.
+*      r_result = 0.
+*    ENDIF.
 
-    LOOP AT passenger_flights INTO DATA(flight).
-
-      total = total + flight->get_free_seats( ).
-
-    ENDLOOP.
-
-    r_result = total / lines( passenger_flights ).
+    SELECT FROM z98_pass_flight
+      FIELDS CAST( AVG( seats_max - seats_occupied ) AS INT4 )
+      WHERE carrier_id = @carrier_id
+      INTO @r_result.
 
   ENDMETHOD.
-
 ENDCLASS.
