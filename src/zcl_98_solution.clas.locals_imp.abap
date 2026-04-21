@@ -75,9 +75,14 @@ CLASS lcl_passenger_flight DEFINITION .
            END OF st_flights_buffer.
 
 *  CLASS-DATA: flights_buffer TYPE TABLE OF st_flights_buffer.
+*  CLASS-DATA: flights_buffer
+*                TYPE SORTED TABLE OF st_flights_buffer
+*                WITH NON-UNIQUE KEY carrier_id connection_id flight_date.
+
   CLASS-DATA: flights_buffer
-                TYPE SORTED TABLE OF st_flights_buffer
-                WITH NON-UNIQUE KEY carrier_id connection_id flight_date.
+                TYPE HASHED TABLE OF st_flights_buffer
+                WITH UNIQUE KEY carrier_id connection_id flight_date
+                WITH NON-UNIQUE SORTED KEY sk_carrier COMPONENTS carrier_id.
 
     "Analyzing Database Access with SQL Trace +
     TYPES:
@@ -189,7 +194,11 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
   METHOD get_flights_by_carrier.
 
     " Check if data for this carrier is already loaded into the buffer
-    IF NOT line_exists( flights_buffer[ carrier_id = i_carrier_id ] ).
+*    IF NOT line_exists( flights_buffer[ carrier_id = i_carrier_id ] ).
+    IF NOT line_exists( flights_buffer[
+                        KEY sk_carrier
+                          COMPONENTS carrier_id = i_carrier_id ]
+                    ).
 
       SELECT
         FROM z98_pass_flight
@@ -237,8 +246,9 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 *                                                     )
 *             ).
 
-  r_result = VALUE #(
+      r_result = VALUE #(
                FOR <flight> IN flights_buffer
+                 USING KEY sk_carrier
                  WHERE ( carrier_id = i_carrier_id ) (
                    NEW lcl_passenger_flight(
                          i_carrier_id    = <flight>-carrier_id
