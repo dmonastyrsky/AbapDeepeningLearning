@@ -1,4 +1,4 @@
-CLASS zcl_98_10_3_int_tab_comprehens DEFINITION
+CLASS zcl_98_10_3_itab_comprehens DEFINITION
   PUBLIC FINAL
   CREATE PUBLIC.
 
@@ -7,7 +7,7 @@ CLASS zcl_98_10_3_int_tab_comprehens DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_98_10_3_int_tab_comprehens IMPLEMENTATION.
+CLASS zcl_98_10_3_itab_comprehens IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
     TYPES: BEGIN OF t_connection,
              carrier_id             TYPE /dmo/carrier_id,

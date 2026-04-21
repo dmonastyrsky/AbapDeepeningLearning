@@ -1,4 +1,4 @@
-CLASS zcl_98_10_4_int_tab_reductions DEFINITION
+CLASS zcl_98_10_4_itab_reductions DEFINITION
   PUBLIC FINAL
   CREATE PUBLIC.
 
@@ -7,7 +7,7 @@ CLASS zcl_98_10_4_int_tab_reductions DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_98_10_4_int_tab_reductions IMPLEMENTATION.
+CLASS zcl_98_10_4_itab_reductions IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
     TYPES: BEGIN OF t_results,
              occupied TYPE /dmo/plane_seats_occupied,

@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_10_2_INT_TAB_DEL_DUPLIC</CLSNAME>
+    <CLSNAME>ZCL_98_11_1_ITAB_FIELD_SYM_ACC</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Deletion of Duplicate Records</DESCRIPT>
+    <DESCRIPT>Field Symbols for Access to Internal Tables</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

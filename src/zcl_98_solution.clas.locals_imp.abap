@@ -216,13 +216,33 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
 
     ENDIF.
 
-    LOOP AT flights_buffer INTO DATA(flight)
-    WHERE carrier_id = i_carrier_id.
-      APPEND NEW lcl_passenger_flight( i_carrier_id    = flight-carrier_id
-                                       i_connection_id = flight-connection_id
-                                       i_flight_date   = flight-flight_date )
-              TO r_result.
-    ENDLOOP.
+*    LOOP AT flights_buffer INTO DATA(flight)
+*    WHERE carrier_id = i_carrier_id.
+*      APPEND NEW lcl_passenger_flight( i_carrier_id    = flight-carrier_id
+*                                       i_connection_id = flight-connection_id
+*                                       i_flight_date   = flight-flight_date )
+*              TO r_result.
+*    ENDLOOP.
+
+*   r_result = VALUE #(
+*               FOR flight IN flights_buffer
+*                 WHERE ( carrier_id = i_carrier_id ) (
+*                   NEW lcl_passenger_flight(
+*                         i_carrier_id    = flight-carrier_id
+*                         i_connection_id = flight-connection_id
+*                         i_flight_date   = flight-flight_date )
+*                                                     )
+*             ).
+
+  r_result = VALUE #(
+               FOR <flight> IN flights_buffer
+                 WHERE ( carrier_id = i_carrier_id ) (
+                   NEW lcl_passenger_flight(
+                         i_carrier_id    = <flight>-carrier_id
+                         i_connection_id = <flight>-connection_id
+                         i_flight_date   = <flight>-flight_date )
+                                                     )
+             ).
 
   ENDMETHOD.
 
@@ -474,11 +494,21 @@ CLASS lcl_cargo_flight IMPLEMENTATION.
 *
 *    ENDLOOP.
 
-     r_result = VALUE #( FOR flight IN flights_buffer
-                 WHERE ( carrier_id = i_carrier_id )
-                 ( NEW lcl_cargo_flight( i_carrier_id    = flight-carrier_id
-                                         i_connection_id = flight-connection_id
-                                         i_flight_date   = flight-flight_date ) ) ).
+*     r_result = VALUE #( FOR flight IN flights_buffer
+*                 WHERE ( carrier_id = i_carrier_id )
+*                 ( NEW lcl_cargo_flight( i_carrier_id    = flight-carrier_id
+*                                         i_connection_id = flight-connection_id
+*                                         i_flight_date   = flight-flight_date ) ) ).
+
+     r_result = VALUE #(
+               FOR <flight> IN flights_buffer
+                 WHERE ( carrier_id = i_carrier_id ) (
+                   NEW lcl_cargo_flight(
+                         i_carrier_id    = <flight>-carrier_id
+                         i_connection_id = <flight>-connection_id
+                         i_flight_date   = <flight>-flight_date )
+                                                     )
+             ).
   ENDMETHOD.
 
   METHOD constructor.

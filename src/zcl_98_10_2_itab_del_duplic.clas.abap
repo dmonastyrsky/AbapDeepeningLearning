@@ -1,4 +1,4 @@
-CLASS zcl_98_10_2_int_tab_del_duplic DEFINITION
+CLASS zcl_98_10_2_itab_del_duplic DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_10_2_int_tab_del_duplic IMPLEMENTATION.
+CLASS zcl_98_10_2_itab_del_duplic IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

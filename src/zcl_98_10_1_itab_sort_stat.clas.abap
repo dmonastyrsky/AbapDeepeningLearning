@@ -1,4 +1,4 @@
-CLASS zcl_98_10_1_int_tab_sort_stat DEFINITION
+CLASS zcl_98_10_1_itab_sort_stat DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_98_10_1_int_tab_sort_stat IMPLEMENTATION.
+CLASS zcl_98_10_1_itab_sort_stat IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

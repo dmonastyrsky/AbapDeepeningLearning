@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_98_10_3_INT_TAB_COMPREHENS</CLSNAME>
+    <CLSNAME>ZCL_98_10_2_ITAB_DEL_DUPLIC</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Table Comprehensions</DESCRIPT>
+    <DESCRIPT>Deletion of Duplicate Records</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
