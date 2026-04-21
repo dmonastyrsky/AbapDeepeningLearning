@@ -74,10 +74,10 @@ CLASS lcl_passenger_flight DEFINITION .
              currency_code  TYPE z98_pass_flight-currency_code,
            END OF st_flights_buffer.
 
-    TYPES tt_flights_buffer TYPE HASHED TABLE OF st_flights_buffer
-                            WITH UNIQUE KEY carrier_id connection_id flight_date.
-
-    CLASS-DATA flights_buffer TYPE tt_flights_buffer.
+*  CLASS-DATA: flights_buffer TYPE TABLE OF st_flights_buffer.
+  CLASS-DATA: flights_buffer
+                TYPE SORTED TABLE OF st_flights_buffer
+                WITH NON-UNIQUE KEY carrier_id connection_id flight_date.
 
     "Analyzing Database Access with SQL Trace +
     TYPES:
@@ -93,7 +93,10 @@ CLASS lcl_passenger_flight DEFINITION .
         duration        TYPE i,
       END OF st_connections_buffer.
 
-    CLASS-DATA connections_buffer TYPE TABLE OF st_connections_buffer.
+*  CLASS-DATA connections_buffer TYPE TABLE OF st_connections_buffer.
+  CLASS-DATA connections_buffer
+               TYPE HASHED TABLE OF st_connections_buffer
+               WITH UNIQUE KEY carrier_id connection_id.
 
 
 ENDCLASS.
@@ -210,7 +213,7 @@ CLASS lcl_passenger_flight IMPLEMENTATION.
         APPENDING TABLE @flights_buffer.
 
       " Maintain buffer integrity by sorting and removing possible DB duplicates
-      SORT flights_buffer BY carrier_id connection_id flight_date.
+*      SORT flights_buffer BY carrier_id connection_id flight_date.
 *      DELETE ADJACENT DUPLICATES FROM flights_buffer
 *        COMPARING carrier_id connection_id flight_date.
 
@@ -631,7 +634,6 @@ CLASS lcl_carrier IMPLEMENTATION.
     SELECT SINGLE FROM /dmo/carrier
 *    FIELDS  name, currency_code
     FIELDS concat_with_space( carrier_id, name, 1 ), currency_code
-
       WHERE carrier_id = @i_carrier_id
       INTO ( @me->name, @me->currency_code ).
 
