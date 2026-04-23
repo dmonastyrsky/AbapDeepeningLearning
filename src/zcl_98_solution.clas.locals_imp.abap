@@ -654,7 +654,7 @@ ENDCLASS.
 
   ENDCLASS.
 
-  CLASS lcl_carrier DEFINITION .
+  CLASS lcl_carrier DEFINITION CREATE PRIVATE.
 
     PUBLIC SECTION.
 
@@ -663,13 +663,21 @@ ENDCLASS.
                tt_output FOR lif_output~tt_output,
                t_output FOR lif_output~t_output.
 
+      TYPES: tt_carriers TYPE STANDARD TABLE OF REF TO lcl_carrier
+                          WITH DEFAULT KEY.
+
+      CLASS-METHODS get_instance
+        IMPORTING
+          i_carrier_id TYPE /dmo/carrier_id
+        RETURNING
+          value(r_result) TYPE REF TO lcl_carrier
+        RAISING
+          cx_abap_invalid_value
+          cx_abap_auth_check_exception.
+
       DATA carrier_id TYPE /dmo/carrier_id READ-ONLY.
 
-      METHODS constructor
-        IMPORTING
-                  i_carrier_id TYPE /dmo/carrier_id
-        RAISING   cx_abap_invalid_value
-                  cx_abap_auth_check_exception.
+
 
       METHODS find_passenger_flight
         IMPORTING
@@ -694,6 +702,8 @@ ENDCLASS.
     PROTECTED SECTION.
     PRIVATE SECTION.
 
+      CLASS-DATA instances TYPE tt_carriers.
+
       DATA name          TYPE /dmo/carrier_name .
       DATA currency_code TYPE /dmo/currency_code  ##NEEDED .
 
@@ -708,20 +718,26 @@ ENDCLASS.
       METHODS get_average_free_seats
         RETURNING VALUE(r_result) TYPE i.
 
+      METHODS constructor
+        IMPORTING
+                  i_carrier_id TYPE /dmo/carrier_id.
+*        RAISING   cx_abap_invalid_value
+*                  cx_abap_auth_check_exception.
+
   ENDCLASS.
 
   CLASS lcl_carrier IMPLEMENTATION.
 
-    METHOD constructor.
+  METHOD get_instance.
 
-      me->carrier_id = i_carrier_id.
-
-      SELECT SINGLE
-      FROM /dmo/carrier
+    SELECT SINGLE
+       FROM /dmo/carrier
 *    FIELDS  name, currency_code
-      FIELDS concat_with_space( carrier_id, name, 1 ), currency_code
-        WHERE carrier_id = @i_carrier_id
-        INTO ( @me->name, @me->currency_code ).
+       FIELDS concat_with_space( carrier_id, name, 1 ) AS name,
+                currency_code
+         WHERE carrier_id = @i_carrier_id
+*           INTO ( @me->name, @me->currency_code ).
+            INTO @DATA(details).
 
 *SELECT SINGLE
 *    FROM /dmo/I_Carrier
@@ -729,27 +745,69 @@ ENDCLASS.
 *    WHERE AirlineID = @i_carrier_id
 *    INTO ( @me->name, @me->currency_code ).
 
-      IF sy-subrc <> 0.
-        RAISE EXCEPTION TYPE cx_abap_invalid_value.
-      ENDIF.
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE cx_abap_invalid_value.
+    ENDIF.
 
-      AUTHORITY-CHECK OBJECT 'Z98CARR'
-        ID 'Z98CARRID' FIELD i_carrier_id
-        ID 'ACTVT'     FIELD '03'.
+    AUTHORITY-CHECK OBJECT 'Z98CARR'
+      ID 'Z98CARRID' FIELD i_carrier_id
+      ID 'ACTVT'     FIELD '03'.
 
-      IF sy-subrc <> 0.
-        "RAISE EXCEPTION TYPE cx_abap_auth_check_exception.
-      ENDIF.
+    IF sy-subrc <> 0.
+      "RAISE EXCEPTION TYPE cx_abap_auth_check_exception.
+    ENDIF.
 
-      "name = carrier_id && ` ` && name.
+    TRY.
+        r_result = instances[ table_line->carrier_id = i_carrier_id ].
 
-*      me->passenger_flights =
-*          lcl_passenger_flight=>get_flights_by_carrier(
-*                i_carrier_id    = i_carrier_id ).
+    CATCH cx_sy_itab_line_not_found.
+        r_result = NEW #( i_carrier_id = i_carrier_id ).
+        r_result->name          = details-name.
+        r_result->currency_code = details-currency_code.
+
+        APPEND r_result TO instances.
+    ENDTRY.
+
+  ENDMETHOD.
+
+    METHOD constructor.
+
+      me->carrier_id = i_carrier_id.
+
+*      SELECT SINGLE
+*      FROM /dmo/carrier
+**    FIELDS  name, currency_code
+*      FIELDS concat_with_space( carrier_id, name, 1 ), currency_code
+*        WHERE carrier_id = @i_carrier_id
+*        INTO ( @me->name, @me->currency_code ).
 *
-*      me->cargo_flights =
-*          lcl_cargo_flight=>get_flights_by_carrier(
-*                i_carrier_id    = i_carrier_id ).
+**SELECT SINGLE
+**    FROM /dmo/I_Carrier
+**    FIELDS concat_with_space( AirlineID, Name, 1 ), CurrencyCode
+**    WHERE AirlineID = @i_carrier_id
+**    INTO ( @me->name, @me->currency_code ).
+*
+*      IF sy-subrc <> 0.
+*        RAISE EXCEPTION TYPE cx_abap_invalid_value.
+*      ENDIF.
+*
+*      AUTHORITY-CHECK OBJECT 'Z98CARR'
+*        ID 'Z98CARRID' FIELD i_carrier_id
+*        ID 'ACTVT'     FIELD '03'.
+*
+*      IF sy-subrc <> 0.
+*        "RAISE EXCEPTION TYPE cx_abap_auth_check_exception.
+*      ENDIF.
+*
+*      "name = carrier_id && ` ` && name.
+*
+**      me->passenger_flights =
+**          lcl_passenger_flight=>get_flights_by_carrier(
+**                i_carrier_id    = i_carrier_id ).
+**
+**      me->cargo_flights =
+**          lcl_cargo_flight=>get_flights_by_carrier(
+**                i_carrier_id    = i_carrier_id ).
 
       DATA(passenger_flights) =
              lcl_passenger_flight=>get_flights_by_carrier(
