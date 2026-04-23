@@ -83,6 +83,9 @@ CLASS ltcl_find_flights  IMPLEMENTATION.
 
       CATCH cx_abap_invalid_value.
         cl_abap_unit_assert=>fail( `Unable to instantiate lcl_carrier` ).
+      CATCH cx_abap_auth_check_exception.
+        cl_abap_unit_assert=>fail( `Unable to instantiate lcl_carrier` ).
+
     ENDTRY.
 
   ENDMETHOD.

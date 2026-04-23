@@ -18,6 +18,7 @@ CLASS zcl_98_solution IMPLEMENTATION.
   METHOD if_oo_adt_classrun~main.
 
     CONSTANTS c_carrier_id TYPE /dmo/carrier_id VALUE 'LH'.
+*    CONSTANTS c_carrier_id TYPE /dmo/carrier_id VALUE 'UA'.
 
     TRY.
         DATA(carrier) = NEW lcl_carrier(  i_carrier_id = c_carrier_id ).
@@ -27,6 +28,9 @@ CLASS zcl_98_solution IMPLEMENTATION.
 
       CATCH cx_abap_invalid_value.
         out->write( | Carrier { c_carrier_id } does not exist | ).
+      CATCH cx_abap_auth_check_exception.
+        out->write( |No authorization to display carrier { c_carrier_id }| ).
+
     ENDTRY.
 
     IF carrier IS BOUND.
