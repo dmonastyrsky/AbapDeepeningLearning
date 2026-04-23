@@ -18,6 +18,7 @@ ENDINTERFACE.
     PUBLIC SECTION.
 
       INTERFACES lif_output.
+      ALIASES get_output for lif_output~get_output.
 
       TYPES: tab TYPE STANDARD TABLE OF REF TO lcl_flight WITH DEFAULT KEY.
 
@@ -43,13 +44,15 @@ ENDINTERFACE.
         RETURNING
           VALUE(r_result) TYPE st_connection_details.
 
-      METHODS get_description
-        RETURNING
-          VALUE(r_result) TYPE string_table.
+
 
     PROTECTED SECTION.
       DATA planetype  TYPE /dmo/plane_type_id.
       DATA connection_details TYPE st_connection_details.
+
+      METHODS get_description
+        RETURNING
+          VALUE(r_result) TYPE string_table.
     PRIVATE SECTION.
   ENDCLASS.
 
@@ -110,10 +113,7 @@ ENDCLASS.
           RETURNING
             VALUE(r_result) TYPE i.
 
-*  methods get_description
-*    RETURNING
-*      VALUE(r_result) TYPE string_table.
-      METHODS get_description REDEFINITION.
+
 
       CLASS-METHODS class_constructor.
       CLASS-METHODS
@@ -124,6 +124,10 @@ ENDCLASS.
             VALUE(r_result) TYPE tt_flights.
 
     PROTECTED SECTION.
+*  methods get_description
+*    RETURNING
+*      VALUE(r_result) TYPE string_table.
+      METHODS get_description REDEFINITION.
     PRIVATE SECTION.
 
 
@@ -508,10 +512,7 @@ ENDCLASS.
           RETURNING
             VALUE(r_result) TYPE z98_plane_actual_load. "/lrn/plane_actual_load.
 
-*  METHODS get_description
-*    RETURNING
-*      VALUE(r_result) TYPE string_table.
-      METHODS get_description REDEFINITION.
+
 
       CLASS-METHODS
         get_flights_by_carrier
@@ -521,6 +522,12 @@ ENDCLASS.
             VALUE(r_result) TYPE tt_flights.
 
     PROTECTED SECTION.
+
+*  METHODS get_description
+*    RETURNING
+*      VALUE(r_result) TYPE string_table.
+      METHODS get_description REDEFINITION.
+
     PRIVATE SECTION.
 
       TYPES: BEGIN OF st_flights_buffer,

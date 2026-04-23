@@ -56,7 +56,9 @@ CLASS zcl_98_solution IMPLEMENTATION.
 
       IF pass_flight IS BOUND.
         out->write( name = |Found a suitable passenger flight in { days_later } days:|
-                    data = pass_flight->get_description( ) ).
+                    "data = pass_flight->get_description( ) ).
+                    "data = pass_flight->lif_output~get_output( ) ).
+                    data = pass_flight->get_output( ) ).
       ELSE.
         out->write( data = `No Passenger Flight found` ).
       ENDIF.
@@ -80,7 +82,9 @@ CLASS zcl_98_solution IMPLEMENTATION.
 
       IF cargo_flight IS BOUND.
         out->write( name = |Found a suitable cargo flight in { days_later2 } days:|
-                    data = cargo_flight->get_description( ) ).
+                    "data = cargo_flight->get_description( ) ).
+                    "data = cargo_flight->lif_output~get_output( ) ).
+                    data = cargo_flight->get_output( ) ).
       ELSE.
         out->write( data = `No cargo flight found` ).
       ENDIF.
