@@ -2,10 +2,22 @@
 *"* local helper classes, interface definitions and type
 *"* declarations
 
+INTERFACE lif_output.
+
+  TYPES t_output TYPE string.
+  TYPES tt_output TYPE STANDARD TABLE OF t_output
+                  WITH NON-UNIQUE DEFAULT KEY.
+
+  METHODS get_output RETURNING VALUE(r_result) TYPE tt_output.
+
+ENDINTERFACE.
+
 *  CLASS lcl_flight DEFINITION CREATE PRIVATE.
   CLASS lcl_flight DEFINITION ABSTRACT.
 
     PUBLIC SECTION.
+
+      INTERFACES lif_output.
 
       TYPES: tab TYPE STANDARD TABLE OF REF TO lcl_flight WITH DEFAULT KEY.
 
@@ -72,6 +84,10 @@
       me->connection_id = i_connection_id.
       me->flight_date   = i_flight_date.
     ENDMETHOD.
+
+  METHOD lif_output~get_output.
+        r_result = me->get_description( ).
+  ENDMETHOD.
 
 ENDCLASS.
 
@@ -635,9 +651,10 @@ ENDCLASS.
 
     PUBLIC SECTION.
 
-      TYPES t_output TYPE string.
-      TYPES tt_output TYPE STANDARD TABLE OF t_output
-                      WITH NON-UNIQUE DEFAULT KEY.
+      INTERFACES lif_output.
+      ALIASES: get_output FOR lif_output~get_output,
+               tt_output FOR lif_output~tt_output,
+               t_output FOR lif_output~t_output.
 
       DATA carrier_id TYPE /dmo/carrier_id READ-ONLY.
 
@@ -646,8 +663,6 @@ ENDCLASS.
                   i_carrier_id TYPE /dmo/carrier_id
         RAISING   cx_abap_invalid_value
                   cx_abap_auth_check_exception.
-
-      METHODS get_output RETURNING VALUE(r_result) TYPE tt_output.
 
       METHODS find_passenger_flight
         IMPORTING
@@ -761,7 +776,7 @@ ENDCLASS.
 
     ENDMETHOD.
 
-    METHOD get_output.
+    METHOD lif_output~get_output.
 
       APPEND |{ 'Carrier Name:'(001)       } { me->name } | TO r_result.
       APPEND |{ 'Passenger Flights:'(002)  } { pf_count } | TO r_result.
