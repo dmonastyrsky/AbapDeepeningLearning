@@ -672,8 +672,9 @@ ENDCLASS.
         RETURNING
           value(r_result) TYPE REF TO lcl_carrier
         RAISING
-          cx_abap_invalid_value
-          cx_abap_auth_check_exception.
+*          cx_abap_invalid_value
+*          cx_abap_auth_check_exception
+          zcx_98_failed.
 
       DATA carrier_id TYPE /dmo/carrier_id READ-ONLY.
 
@@ -746,7 +747,15 @@ ENDCLASS.
 *    INTO ( @me->name, @me->currency_code ).
 
     IF sy-subrc <> 0.
-      RAISE EXCEPTION TYPE cx_abap_invalid_value.
+*      RAISE EXCEPTION TYPE cx_abap_invalid_value
+*          EXPORTING
+*            value = CONV #( i_carrier_id ).
+
+        RAISE EXCEPTION TYPE zcx_98_failed
+          EXPORTING
+            textid = zcx_98_failed=>carrier_not_exist
+            carrier_id = i_carrier_id.
+
     ENDIF.
 
     AUTHORITY-CHECK OBJECT 'Z98CARR'
@@ -754,7 +763,14 @@ ENDCLASS.
       ID 'ACTVT'     FIELD '03'.
 
     IF sy-subrc <> 0.
-      "RAISE EXCEPTION TYPE cx_abap_auth_check_exception.
+*      RAISE EXCEPTION TYPE cx_abap_auth_check_exception
+*        EXPORTING
+*          textid = cx_abap_auth_check_exception=>missing_authorization.
+
+*         RAISE EXCEPTION TYPE zcx_98_failed
+*           EXPORTING
+*             textid     = zcx_98_failed=>carrier_no_read_auth
+*             carrier_id = i_carrier_id.
     ENDIF.
 
     TRY.
