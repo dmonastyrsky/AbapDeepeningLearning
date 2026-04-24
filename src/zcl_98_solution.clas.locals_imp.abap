@@ -12,8 +12,14 @@ INTERFACE lif_output.
 
 ENDINTERFACE.
 
-*  CLASS lcl_flight DEFINITION CREATE PRIVATE.
-  CLASS lcl_flight DEFINITION ABSTRACT.
+  "! Abstract superclass for classes
+  "! {@link .lcl_passenger_flight} and
+  "! {@link .lcl_cargo_flight} <br/>
+  "! Every instance is uniquely identified by attributes
+  "! {@link .lcl_flight.DATA:carrier_id},
+  "! {@link .lcl_flight.DATA:connection_id}, and
+  "! {@link .lcl_flight.DATA:flight_date}.
+CLASS lcl_flight DEFINITION ABSTRACT.
 
     PUBLIC SECTION.
 
@@ -654,6 +660,8 @@ ENDCLASS.
 
   ENDCLASS.
 
+  "! Flight Carrier -
+  "! A factory logic ensures that there can only be one instance for each carrier ID.
   CLASS lcl_carrier DEFINITION CREATE PRIVATE.
 
     PUBLIC SECTION.
@@ -666,6 +674,10 @@ ENDCLASS.
       TYPES: tt_carriers TYPE STANDARD TABLE OF REF TO lcl_carrier
                           WITH DEFAULT KEY.
 
+      "! Factory method - returns an instance of this class.
+      "! @parameter i_carrier_id | Three-character identification of the carrier.
+      "! @parameter r_result | Reference to the instance - initial if instantiation failed.
+      "! @raising zcx_98_failed | Instantiation failed - evaluate the exception text for details.
       CLASS-METHODS get_instance
         IMPORTING
           i_carrier_id TYPE /dmo/carrier_id
@@ -680,6 +692,17 @@ ENDCLASS.
 
 
 
+      "! Search for a passenger flight between two airports that
+      "! <ul>
+      "! <li>lies on or after a given date and</li>
+      "! <li>has a minimum number of available seats left</li>
+      "! </ul>
+      "! @parameter i_airport_from_id | <em>Departure</em> airport
+      "! @parameter i_airport_to_id | <em>Arrival</em> airport
+      "! @parameter i_from_date | First possible flight date
+      "! @parameter i_seats | Minimum number of available seats
+      "! @parameter e_flight | Found flight (object reference)
+      "! @parameter e_days_later | Number of days after the requested date
       METHODS find_passenger_flight
         IMPORTING
           i_airport_from_id TYPE /dmo/airport_from_id
@@ -690,6 +713,18 @@ ENDCLASS.
           e_flight          TYPE REF TO lcl_flight
           e_days_later      TYPE i.
 
+
+      "! Search for a <strong>cargo flight</strong> between two airports that
+      "! <ul>
+      "! <li>lies on or after a given date and</li>
+      "! <li>has a minimum number of available capacity left</li>
+      "! </ul>
+      "! @parameter i_airport_from_id | <em>Departure</em> airport
+      "! @parameter i_airport_to_id | <em>Arrival</em> airport
+      "! @parameter i_from_date | First possible flight date
+      "! @parameter i_cargo | Minimum number of available capacity
+      "! @parameter e_flight | Found flight (object reference)
+      "! @parameter e_days_later | Number of days after the requested date
       METHODS find_cargo_flight
         IMPORTING
           i_airport_from_id TYPE /dmo/airport_from_id
